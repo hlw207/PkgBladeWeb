@@ -1,0 +1,63 @@
+.source{
+    position: relative;
+    box-sizing: border-box;
+    margin-left: 12px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    width: 200px;
+    border-radius: 4px;
+    border: 1.5px solid #dcdfe6;
+    transition: all 0.3s;
+}
+
+.source:hover{
+    border: 1.5px solid #c0c4cc;
+}
+
+.source:focus-within{
+    border: 1.5px solid #2f15a1;
+}
+
+.source_input::placeholder{
+    color: #a8abb2;
+    font-size: 13px;
+}
+
+.source_input{
+    width: 150px;
+    margin-left: 6px;
+    height: 24px;
+    border: none;        /* 重置input */
+    box-shadow:none;
+    outline: none;
+    font-size: 13px;
+}
+
+.cancel{
+    position: absolute;
+    right: 10px;
+    width: 12px;
+    height: 12px;
+    border-radius: 6px;
+    box-sizing: border-box;
+    border: 1px solid #c0c4cc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.iconStyle{
+    color: #c0c4cc;
+    font-size: 8px;
+}
+/*
+
+<div class="source">
+  <input class="source_input" v-model="choice.source" placeholder="请输入来源">
+  <div class="cancel" v-if="choice.source != ''" @click="choice.source = ''">
+    <el-icon class="iconStyle"><Close /></el-icon>
+  </div>
+</div>
+ */

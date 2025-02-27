@@ -1,0 +1,9 @@
+/*Vue写在App.vue的style里*/
+:root {
+    --spilit-color: #e7e6e9;
+    --border-color: #dedee0;
+    --grey-back: #f1f0f3;
+    --lowgrey-back: #fbfafd;
+    --hover-color: #dedde0;
+    --font-color: #3a383f;
+}
