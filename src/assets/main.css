@@ -1,35 +1,30 @@
 @import './base.css';
 
+@font-face {
+  font-family: "GitLab Mono";
+  font-weight: 100 900;
+  font-display: swap;
+  font-style: normal;
+  src: url(./gitlab-mono/GitLabMono-08d2c5e8ff8fd3d2d6ec55bc7713380f8981c35f9d2df14e12b835464d6e8f23.woff2) format("woff2")
+}
+
+@font-face {
+  font-family: "GitLab Sans";
+  font-weight: 100 900;
+  font-display: swap;
+  font-style: normal;
+  font-named-instance:"Regular";
+  src: url(./gitlab-sans/GitLabSans-1e0a5107ea3bbd4be93e8ad2c503467e43166cd37e4293570b490e0812ede98b.woff2) format("woff2")
+}
+
+
 body{
   margin: 0;
   font-family: "GitLab Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans", Ubuntu, Cantarell, "Helvetica Neue", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 }
 
-.top{
-  display: flex;
-  justify-content: center;
-}
-
-.top_box{
-  margin-top: 20px;
-  width: 80%;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  background: #e6f7ff;
-}
-
-.top_box_c1{
-  height: 15px;
-  background: #91d5ff;
-}
-
-.top_box_c2{
-  height: 10px;
-  background: rgba(186, 231, 255, 0.8);
-}
-
-.top_box_main{
-  padding: 0 30px 30px;
-  display: flex;
+.else-family{
+  font-family: "GitLab Mono", "JetBrains Mono", "Menlo", "DejaVu Sans Mono", "Liberation Mono", "Consolas", "Ubuntu Mono", "Courier New", "andale mono", "lucida console", monospace;
 }
 
 /*#app {*/

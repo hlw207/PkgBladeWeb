@@ -6,7 +6,7 @@ import router from "@/router";
 const route = useRoute()
 
 const guide = ref([
-  "/project", "/document", "/community", "/help"
+  "/project", "/document", "/community", "/help", "/home"
 ])
 
 const guidePathList = ref(["pkgBlade", "project"])
@@ -17,7 +17,8 @@ const pathToName = ref({
   "document": "档案",
   "community": "共享社区",
   "help": "帮助文档",
-  "addPkg": "添加软件包"
+  "addPkg": "添加软件包",
+  "home": "个人主页"
 })
 
 const guideChoice = ref('/project')

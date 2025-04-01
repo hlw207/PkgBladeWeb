@@ -1,10 +1,14 @@
 <script setup lang="ts">
-import {ref} from "vue";
+import {onMounted, ref} from "vue";
 import Tip from "@/components/tip.vue";
+import router from "@/router";
+import logoPrune from "~/logoPrune.png"
+import {useUserInfoStore} from "@/stores/user";
 
-const url = ref('../../public/logoPrune.png')
+const url = ref(logoPrune)
+const user = useUserInfoStore()
 
-const show = ref([false, false, false, false, false])
+const show = ref([false, false, false, false, false, false])
 const openShow = (index: number) =>{
   show.value[index] = true
 }
@@ -12,12 +16,24 @@ const openShow = (index: number) =>{
 const closeShow = (index: number) =>{
   show.value[index] = false
 }
+
+const go = () =>{
+  if(user.name == '')
+    router.push('/pkgBlade/login')
+  else {
+    router.push('/pkgBlade/home')
+  }
+}
+
+onMounted(()=>{
+  // user.name = ''
+})
 </script>
 
 <template>
   <div class="navigation">
     <div class="navigation_top">
-      <div class="page_up" @mouseenter="openShow(0)" @mouseleave="closeShow(0)">
+      <div class="page_up" @mouseenter="openShow(0)" @mouseleave="closeShow(0)" @click="router.push('/')">
         <img :src="url" style="width: 32px">
         <div style="margin-left: 1px">
           <div style="font-size: 13.5px;color: var(--font-color);font-weight: 540">剪剪减</div>
@@ -26,16 +42,17 @@ const closeShow = (index: number) =>{
         <Tip tags="主页" v-if="show[0]"/>
       </div>
       <div style="display: flex;flex: 1;justify-content: right">
-        <div class="avatar"  @mouseenter="openShow(4)" @mouseleave="closeShow(4)">
+        <div class="avatar"  @mouseenter="openShow(user.name == '' ? 5 : 4)" @mouseleave="closeShow(user.name == '' ? 5 : 4)" @click="go">
           <div class="avatar_main">
             <el-icon><User /></el-icon>
           </div>
           <Tip tags="我的主页" v-if="show[4]"/>
+          <Tip tags="登录" v-if="show[5]" />
         </div>
       </div>
     </div>
     <div style="display: flex;justify-content: space-between;margin-top: 10px">
-      <div class="item_box" @mouseenter="openShow(1)" @mouseleave="closeShow(1)">
+      <div class="item_box" @mouseenter="openShow(1)" @mouseleave="closeShow(1)" @click="router.push('/pkgBlade/addPkg')">
         <el-icon><FolderAdd />
         </el-icon>
         <Tip tags="添加包" v-if="show[1]"/>

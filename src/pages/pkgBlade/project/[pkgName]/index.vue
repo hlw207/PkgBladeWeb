@@ -2,23 +2,38 @@
 import {onMounted, reactive, ref} from "vue";
 import {useRoute} from "vue-router";
 import LineLayout from "@/components/icon/lineLayout.vue";
+import {usePipelineStore} from "@/pages/pkgBlade/project/[pkgName]/pipeline/pipeline";
+import {request} from "@/util/request";
+import {ElMessage} from "element-plus";
+import router from "@/router";
+import type {pipeline, pipelineStage} from "@/util/interface";
+import DependencyGraph from "@/components/dependencyGraph.vue";
+
+const pipelineInfo = usePipelineStore()
 
 const route = useRoute()
 const pkgName = ref('')
 const right_top = ref(0)
+const deleteShow = ref(false)
+
+const pkgBasic = ref({} as pipeline)
+const transform = ['exe', 'source', 'linux_package']
 
 const pkg = reactive({
-  name: '',
-  description: 'iconfont-国内功能很强大且图标内容很丰富的矢量图标库，提供矢量图标下载、在线存储、格式转换等功能。 阿里巴巴体验团队倾力打造，设计和前端开发的便捷工具.',
-  type: '源码'
+  dependency: 0,
+  allDependency: 0,
+  layout: 0,
 })
 
+const pipelineList = ref([] as pipelineStage[])
 
-const pipelineList = ref([
-  {stage: '依赖拉取', status: 'finished'},
-  {stage: '依赖裁剪', status: 'processing'},
-  {stage: '依赖生成', status: 'not_started'},
-])
+const intToStatus = ref(['finished', 'not_started', 'failed', 'processing'])
+const missionToName = ref({
+  GET_DEPENDENCY: "依赖拉取",
+  FILE_CUTTING: "文件裁剪",
+  FUNCTION_CUTTING: "函数裁剪",
+  GENERATE: "依赖生成"
+})
 
 const pipeShow = ref([false, false, false])
 
@@ -30,8 +45,81 @@ const closeShow = (index: number) =>{
   pipeShow.value[index] = false
 }
 
+const deleteMission = () =>{
+  request({
+    url: '/pipeline/deletePipeline',
+    method: 'POST',
+    params: {
+      missionName: <string>route.params['pkgName']
+    }
+  }).then((res)=>{
+    ElMessage.success("成功删除" + <string>route.params['pkgName'])
+    router.push('/')
+  })
+}
+
+const getStage = () => {
+  request({
+    url: '/pipeline/getPipelineStageInfo',
+    method: 'get',
+    params: {
+      missionName: <string>route.params['pkgName']
+    }
+  }).then((res)=>{
+    console.log(res.data)
+    pipelineList.value = res.data.data
+  })
+}
+
+const getPipelineDetail = () =>{
+  request({
+    url: '/pipeline/getPipelineDetail',
+    method: 'get',
+    params: {
+      missionName: <string>route.params['pkgName']
+    }
+  }).then((res)=>{
+    console.log(res.data)
+    pkgBasic.value = res.data.data
+  })
+}
+
+const getPipelineInfoDetail = () =>{
+  request({
+    url: '/pipeline/getPipelineInfoDetail',
+    method: 'get',
+    params: {
+      missionName: <string>route.params['pkgName']
+    }
+  }).then((res)=>{
+    console.log(res.data)
+  })
+}
+
+const formatDate = (date: Date) =>{
+  if(date != null) {
+    const d = new Date(date);
+    const months = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    return `${months[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+  }
+}
+
+const gainPkg = (allDependency: number, dependency: number, layout: number) =>{
+  pkg.dependency = dependency
+  pkg.allDependency = allDependency
+  pkg.layout = layout
+}
+
 onMounted(()=>{
   pkgName.value = <string>route.params['pkgName']
+  pipelineInfo.missionName = pkgName.value
+  pipelineInfo.dependency = ''
+  getStage()
+  getPipelineDetail()
+  getPipelineInfoDetail()
 })
 </script>
 
@@ -47,20 +135,26 @@ onMounted(()=>{
         <div class="project_avatar">{{pkgName.substring(0, 1).toUpperCase()}}</div>
         <div class="project_text">{{pkgName}}</div>
         <div style="display: flex;flex: 1;justify-content: right;align-items: center">
-          <div class="cancel_button">删除软件包</div>
+          <div class="cancel_button" @click="deleteShow = true">删除软件包</div>
           <div class="upload_button">下载依赖包</div>
         </div>
       </div>
       <div>
         <div class="pkg_show">
-          <div class="pkg_show_top"></div>
+          <div class="pkg_show_top" style="height: 45px">
+            <div style="font-size: 15px;font-weight: bolder">依赖包图示</div>
+            <div style="display: flex;align-items: center;justify-content: right;flex: 1">
+
+            </div>
+          </div>
+          <DependencyGraph @gain-pkg="gainPkg"/>
         </div>
-        <div class="pkg_show">
-          <div class="pkg_show_top"></div>
-        </div>
-        <div class="pkg_show">
-          <div class="pkg_show_top"></div>
-        </div>
+<!--        <div class="pkg_show">-->
+<!--          <div class="pkg_show_top"></div>-->
+<!--        </div>-->
+<!--        <div class="pkg_show">-->
+<!--          <div class="pkg_show_top"></div>-->
+<!--        </div>-->
       </div>
     </div>
     <div class="pkg_right"></div>
@@ -68,26 +162,27 @@ onMounted(()=>{
       <div class="pkg_title">软件包信息</div>
       <div class="pkg_info">
         <div style="display: flex;align-items: center;">
-          <Exe v-if="pkg.type == '可执行文件'" class="project_icon"/>
-          <Source v-if="pkg.type == '源码'" class="project_icon"/>
+          <Exe v-if="pkgBasic.missionType == 0" class="project_icon"/>
+          <Source v-if="pkgBasic.missionType == 1" class="project_icon"/>
+          <Linux v-if="pkgBasic.missionType == 2" class="project_icon"/>
           <div class="project_number" style="margin-left: 0">
-            <div>{{pkg.type}}</div>
+            <div>{{transform[pkgBasic.missionType]}}</div>
           </div>
         </div>
         <div style="width: 100%;margin-top: 6px">
-          {{pkg.description}}
+          {{pkgBasic.missionDescription}}
         </div>
       </div>
       <div class="pkg_title">流水线信息</div>
       <div class="pkg_info">
         <div style="display: flex;align-items: center">
           <template v-for="(p ,index) in pipelineList">
-            <div class="pipeline_basic" :class="['pipeline_' + p.status]" @mouseenter="openShow(index)" @mouseleave="closeShow(index)">
-              <el-icon v-if="p.status == 'finished'" style="margin-top: 1px"><Select /></el-icon>
-              <el-icon v-if="p.status == 'defeated'"><CloseBold /></el-icon>
-              <el-icon v-if="p.status == 'processing'"><MoreFilled /></el-icon>
-              <el-icon v-if="p.status == 'not_started'"><DArrowRight /></el-icon>
-              <Tip :tags="p.stage + '：' + p.status"  v-if="pipeShow[index]" style="font-weight: normal"/>
+            <div class="pipeline_basic" :class="['pipeline_' + intToStatus[p.missionStageStatus]]" @mouseenter="openShow(index)" @mouseleave="closeShow(index)">
+              <el-icon v-if="intToStatus[p.missionStageStatus] == 'finished'" style="margin-top: 1px"><Select /></el-icon>
+              <el-icon v-if="intToStatus[p.missionStageStatus] == 'defeated'"><CloseBold /></el-icon>
+              <el-icon v-if="intToStatus[p.missionStageStatus] == 'processing'"><MoreFilled /></el-icon>
+              <el-icon v-if="intToStatus[p.missionStageStatus] == 'not_started'"><DArrowRight /></el-icon>
+              <Tip :tags="missionToName[p.missionStageName] + '：' + intToStatus[p.missionStageStatus]"  v-if="pipeShow[index]" style="font-weight: normal"/>
             </div>
             <div class="pipeline_line" v-if="index != pipelineList.length - 1"></div>
           </template>
@@ -100,7 +195,7 @@ onMounted(()=>{
             <Dependency style="height: 16px;width: 16px;"/>
           </div>
           <div style="margin-top: -5px; display: flex">
-            <div style="font-weight: bolder;margin: 0 5px">5</div>
+            <div style="font-weight: bolder;margin: 0 5px">{{pkg.dependency}}</div>
             个直接依赖
           </div>
         </div>
@@ -109,7 +204,7 @@ onMounted(()=>{
             <AllDependency style="height: 18px;width: 18px;margin-left: -1px;"/>
           </div>
           <div style="margin-top: -3px;display: flex">
-            <div style="font-weight: bolder;margin: 0 5px">12</div>
+            <div style="font-weight: bolder;margin: 0 5px">{{pkg.allDependency}}</div>
             个全部依赖
           </div>
         </div>
@@ -118,7 +213,7 @@ onMounted(()=>{
             <LineLayout style="height: 21px;width: 21px;margin-left: -2px"/>
           </div>
           <div style="margin-top: -3px;display: flex">
-            <div style="font-weight: bolder;margin: 0 5px">3</div>
+            <div style="font-weight: bolder;margin: 0 5px">{{pkg.layout}}</div>
             层递归
           </div>
         </div>
@@ -134,10 +229,27 @@ onMounted(()=>{
       </div>
       <div class="pkg_title">创建于</div>
       <div class="pkg_info" style="border-bottom: none">
-        March 21, 2025
+        {{formatDate(pkgBasic.missionCreateTime)}}
       </div>
     </div>
   </div>
+
+  <el-dialog
+      v-model="deleteShow"
+      title=""
+      width="500"
+  >
+    <div style="color: black;font-size: 18px;margin-top: -25px;">是否删除项目 {{route.params['pkgName']}} ？</div>
+    <div style="font-size: 12px;color: #737373">一旦删除将永久无法找回</div>
+    <template #footer>
+      <div class="dialog-footer">
+        <el-button @click="deleteShow = false">取消</el-button>
+        <el-button type="primary" @click="deleteMission">
+          确定
+        </el-button>
+      </div>
+    </template>
+  </el-dialog>
 </template>
 
 <style scoped>
@@ -317,7 +429,6 @@ onMounted(()=>{
   background: white;
   font-size: var(--font-color);
   margin-top: 18px;
-  height: 300px;
   border-radius: 5px;
 }
 
@@ -326,5 +437,14 @@ onMounted(()=>{
   border-bottom: 1px solid rgb(220, 220, 222);
   background: var(--lowgrey-back);
   border-radius: 5px 5px 0 0;
+  display: flex;
+  align-items: center;
+  padding: 0 15px;
+}
+
+.pkg_color{
+  width: 18px;
+  height: 18px;
+  border-radius: 9px;
 }
 </style>

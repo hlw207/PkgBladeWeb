@@ -54,10 +54,18 @@ export default defineConfig({
     host: true,//ip地址 或 '0.0.0.0' 或 "loaclhost"
     // open: false, //启动后是否自动打开浏览器
     // https: false, // 是否开启 https
+    proxy: {
+      '/api': {
+        target: 'http://118.25.93.102:8091',
+        changeOrigin: true, // 是否改变请求源
+        rewrite: (path) => path.replace(/^\/api/, ''), // 重写路径
+      }
+    }
   },
   resolve: {
     alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url))
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
+      '~': fileURLToPath(new URL('./public', import.meta.url))
     }
   }
 })

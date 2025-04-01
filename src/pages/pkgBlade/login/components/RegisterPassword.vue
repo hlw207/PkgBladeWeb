@@ -15,7 +15,7 @@ const login = useLoginInfoStore()
 const user = useUserInfoStore()
 const password = ref('')
 const passwordCertain = ref('')
-const logo = ref('../../../public/teamB.png')
+const logo = ref('../../../public/logoPrune.png')
 
 const back = () =>{
   login.order = 0
@@ -31,27 +31,18 @@ const change = () =>{
     password.value = ''
   }else {
     request({
-      url: '/user/register',
-      method: 'GET',
+      url: '/auth/register',
+      method: 'POST',
       params: {
-        account: login.account,
+        username: login.account,
         password: password.value,
       }
     }).then((res)=>{
       console.log(res)
       if(res.data) {
         ElMessage.success("注册成功")
-        user.id = login.account
-        request({
-          url: '/user/getName',
-          method: 'GET',
-          params:{
-            account: login.account
-          }
-        }).then((res)=>{
-          user.name = res.data
-        })
-        router.push('/')
+        login.type = 0
+        login.order = 0
       }else {
         ElMessage.warning("注册失败")
       }
@@ -66,7 +57,7 @@ const change = () =>{
     <div class="loginLogo">
       <el-image :src="logo" class="loginPic"></el-image>
       <div class="loginTitle">
-        91 Roco
+        Pkg Blade
       </div>
     </div>
     <div class="loginBack">

@@ -36,6 +36,7 @@ const props = defineProps<{
 .tip_main{
   white-space: nowrap;
   background: var(--font-color);
+  width: fit-content;
   height: 32px;
   padding: 0 12px;
   border-radius: 6px;

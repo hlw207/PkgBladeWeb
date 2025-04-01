@@ -1,10 +1,18 @@
 <script setup lang="ts">
 
-import {computed, onMounted, ref} from "vue";
+import {computed, onMounted, reactive, ref} from "vue";
 import {request} from "@/util/request";
 import {useRoute} from "vue-router";
 
+const emits = defineEmits(['gainPkg']);
+
 const route = useRoute()
+
+const pkg = reactive({
+  dependency: 0,
+  allDependency: 0,
+  layout: 0,
+})
 
 const nodes = [
   { id: 'wget_0', data: { TrimRate: '0%', DeletedFiles: 0, DeletedFunctions: 0 } },
@@ -89,11 +97,17 @@ const showGraph = async () => {
       if (nodesJson.hasOwnProperty(key)) { // 确保是对象自身的属性，而非继承的属性
         for (let i = 0; i < nodesJson[key].length; i++) {
           let item = {id: key + '_' + nodesJson[key][i], data: {name: key, order: nodesJson[key][i], status: nodesJson[key][i]}}
+          if(item.data.order != 0)
+            pkg.allDependency += 1
+          if(item.data.order == 1)
+            pkg.dependency += 1
+          pkg.layout = Math.max(pkg.layout, item.data.order)
           console.log(item)
           __graph_json_data.nodes.push(item)
         }
       }
     }
+    emits('gainPkg', pkg.allDependency, pkg.dependency, pkg.layout)
     __graph_json_data.rootId = __graph_json_data.nodes[0].id
 
     // 替换单引号为双引号，并将元组格式转换为数组格式
@@ -145,155 +159,29 @@ onMounted(()=>{
 })
 </script>
 
-<route lang="yaml">
-  meta:
-    layout: pkgDetail
-</route>
-
 <template>
-  <div class="dependency">
-    <div class="dependency_left">
-      <div style="font-weight: bolder;font-size: 22px">
-        软件包依赖
-      </div>
-      <div class="pkg_show">
-        <div class="pkg_show_top" style="height: 45px">
-          <div style="font-size: 15px;font-weight: bolder">依赖包数据</div>
-          <div style="display: flex;flex: 1;justify-content: right">
-            <el-select v-model="choose" placeholder="Select" style="width: 180px;">
-              <el-option
-                  v-for="node in nodes"
-                  :key="node.id"
-                  :label="node.id"
-                  :value="node.id"
-              />
-            </el-select>
+  <div class="pkg_show_main" style="height: 650px">
+    <RelationGraph
+        ref="graphRef"
+        :options="graphOptions"
+        :on-node-click="onNodeClick"
+        :on-line-click="onLineClick">
+
+      <template #node="{node}">
+        <div class="package" :class="['border_' + node.data.status]" style="background: transparent">
+          <div class="package_top" :class="['border_' + node.data.status]">
+            {{node.data.order}}
+          </div>
+          <div class="package_main" :class="['border_' + node.data.status]">
+            {{node.data.name}}
           </div>
         </div>
-        <div class="pkg_show_main" style="padding: 25px 80px">
-          <el-progress type="dashboard" :percentage="Number(now_pkg.data.TrimRate.substring(0, now_pkg.data.TrimRate.length - 1))" status="success">
-            <template #default="{ percentage }">
-              <div style="font-weight: bolder">裁剪率</div>
-              <div style="font-weight: bolder;margin-top: 10px;font-size: 14px">{{ percentage }}%</div>
-            </template>
-          </el-progress>
-          <el-progress type="dashboard" :percentage="Number(now_pkg.data.TrimRate.substring(0, now_pkg.data.TrimRate.length - 1))" color="#8c8c8c">
-            <template #default="{ percentage }">
-              <div style="font-weight: bolder;color: #8c8c8c">总文件数</div>
-              <div style="font-weight: bolder;margin-top: 10px;font-size: 14px;color: #8c8c8c">108</div>
-            </template>
-          </el-progress>
-          <el-progress type="dashboard" :percentage="100" status="warning">
-            <div style="font-weight: bolder">裁剪文件数</div>
-            <div style="font-weight: bolder;margin-top: 10px;font-size: 14px">{{ now_pkg.data.DeletedFiles }}</div>
-          </el-progress>
-          <el-progress type="dashboard" :percentage="100">
-            <template #default="{ percentage }">
-              <div style="font-weight: bolder">裁剪函数数</div>
-              <div style="font-weight: bolder;margin-top: 10px;font-size: 14px">{{ now_pkg.data.DeletedFunctions }}</div>
-            </template>
-          </el-progress>
-        </div>
-      </div>
-
-      <div class="pkg_show">
-        <div class="pkg_show_top" style="height: 45px">
-          <div style="font-size: 15px;font-weight: bolder">依赖包图示</div>
-          <div style="display: flex;flex: 1;justify-content: right">
-          </div>
-        </div>
-        <div class="pkg_show_main" style="height: 700px">
-          <RelationGraph
-              ref="graphRef"
-              :options="graphOptions"
-              :on-node-click="onNodeClick"
-              :on-line-click="onLineClick">
-
-            <template #node="{node}">
-              <div class="package" :class="['border_' + node.data.status]" style="background: transparent">
-                <div class="package_top" :class="['border_' + node.data.status]">
-                  {{node.data.order}}
-                </div>
-                <div class="package_main" :class="['border_' + node.data.status]">
-                  {{node.data.name}}
-                </div>
-              </div>
-            </template>
-          </RelationGraph>
-        </div>
-      </div>
-    </div>
-
-    <div class="dependency_right"></div>
-    <div class="dependency_right" style="position: fixed;right: 20px">
-      <div style="font-size: 15px;color: var(--font-color);margin-bottom: 15px;font-weight: bolder">
-        涉及依赖包
-      </div>
-      <el-scrollbar :height="700">
-        <template v-for="node in nodes">
-          <div class="dependency_package">
-            {{node.id}}
-            <div style="display: flex;flex: 1;justify-content: right;align-items: center">
-              <div style="font-size: 13px;color: #737373">{{node.data.TrimRate}}</div>
-            </div>
-          </div>
-        </template>
-      </el-scrollbar>
-    </div>
+      </template>
+    </RelationGraph>
   </div>
 </template>
 
 <style scoped>
-.dependency{
-  padding: 20px 20px 20px 25px;
-  display: flex;
-}
-
-.dependency_left{
-  display: flex;
-  flex-direction: column;
-  flex: 1
-}
-
-.dependency_right{
-  margin-left: 20px;
-  width: 240px;
-  padding: 15px;
-}
-
-.dependency_package{
-  box-sizing: border-box;
-  position: relative;
-  display: flex;
-  align-items: center;
-  font-size: 14px;
-  padding: 7px 10px;
-  cursor: pointer;
-}
-
-.dependency_package:hover{
-  background: var(--grey-back);
-  color: #1f75cb;
-}
-
-.pkg_show{
-  border: 1px solid rgb(220, 220, 222);
-  background: white;
-  font-size: var(--font-color);
-  margin-top: 18px;
-  border-radius: 5px;
-}
-
-.pkg_show_top{
-  height: 40px;
-  border-bottom: 1px solid rgb(220, 220, 222);
-  background: var(--lowgrey-back);
-  border-radius: 5px 5px 0 0;
-  display: flex;
-  align-items: center;
-  padding: 0 15px;
-}
-
 .pkg_show_main{
   display: flex;
   align-items: center;
@@ -345,7 +233,6 @@ onMounted(()=>{
 .border_0 {
   background: #ABABAB;
   pointer-events: none;
-  cursor: none;
   color: var(--font-color)
 }
 

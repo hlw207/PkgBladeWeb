@@ -2,7 +2,7 @@
 import {computed, ref} from "vue";
 import {useLoginInfoStore} from "@/pages/pkgBlade/login/loginInfo";
 
-const logo = ref('../../../public/teamB.png')
+const logo = ref('../../../public/logoPrune.png')
 const click = ref(false)
 const login = useLoginInfoStore()
 
@@ -14,8 +14,8 @@ const ifNext = computed(()=>{
   // // 正则表达式匹配邮箱号
   // const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
   // 正则表达式匹配以"prism"开头的账号
-  const prismAccountPattern = /^Roco.*/;
-  if(prismAccountPattern.test(account.value)) {
+  // const prismAccountPattern = /^Roco.*/;
+  if(account.value != '') {
     click.value = false
     return true
   }
@@ -40,16 +40,16 @@ const changeType = () =>{
     <div class="loginLogo">
       <el-image :src="logo" class="loginPic"></el-image>
       <div class="loginTitle">
-        91 Roco
+        PkgBlade
       </div>
     </div>
     <div class="loginLogin">登录</div>
-    <div class="loginTip">继续Roco</div>
+    <div class="loginTip">以继续</div>
     <div style="height: 20px">
     </div>
-    <div style="color: red;font-size: 15px;margin-bottom: 10px" v-if="!ifNext && click">请输入有效的Roco账号</div>
+    <div style="color: red;font-size: 15px;margin-bottom: 10px" v-if="!ifNext && click">请输入有效的PkgBlade账号</div>
     <div class="loginInput">
-      <input v-model="account" class="inputInput" placeholder="Roco账号">
+      <input v-model="account" class="inputInput" placeholder="PkgBlade账号">
     </div>
     <div class="loginRegister">
       没有账户？

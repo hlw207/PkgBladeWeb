@@ -3,17 +3,46 @@
 import router from "@/router";
 import {onMounted, ref} from "vue";
 import Efficiency from "@/components/icon/efficiency.vue";
+import type {pipeline} from "@/util/interface";
+import {request} from "@/util/request";
 
 const pkgTotal = ref(13)
 const pkgPage = ref(1)
 const pkgList = ref([
-  {name: "gyj_package", describe: 'gyj测试package，项目进度遥遥领先', type: '源码', status: 'processing', dependency: 8, degree: 0.315},
-  {name: "gyj_package1", describe: 'gyj测试package，项目进度遥遥领先', type: '源码', status: 'finished', dependency: 11, degree: 0.442},
-  {name: "gyj_package2", describe: 'gyj测试package，项目进度遥遥领先', type: '可执行文件', status: 'defeated', dependency: 3, degree: 0.124},
-  {name: "gyj_package3", describe: 'gyj测试package，项目进度遥遥领先', type: '源码', status: 'finished', dependency: 2, degree: 0.093},
-])
+  {
+    missionId: 1, // 假设任务ID为1
+    missionName: "gyj_package",
+    missionDescription: 'gyj测试package，项目进度遥遥领先',
+    missionType: 0, // 假设源码对应的类型为0
+    missionCreateTime: new Date(), // 假设任务开始时间为当前时间
+  },
+  {
+    missionId: 2, // 假设任务ID为2
+    missionName: "gyj_package1",
+    missionDescription: 'gyj测试package，项目进度遥遥领先',
+    missionType: 0, // 假设源码对应的类型为0
+    missionCreateTime: new Date(), // 假设任务开始时间为当前时间
+  },
+  {
+    missionId: 3, // 假设任务ID为3
+    missionName: "gyj_package2",
+    missionDescription: 'gyj测试package，项目进度遥遥领先',
+    missionType: 1, // 假设可执行文件对应的类型为1
+    missionCreateTime: new Date(), // 假设任务开始时间为当前时间
+  },
+  {
+    missionId: 4, // 假设任务ID为4
+    missionName: "gyj_package3",
+    missionDescription: 'gyj测试package，项目进度遥遥领先',
+    missionType: 2, // 假设源码对应的类型为0
+    missionCreateTime: new Date(), // 假设任务开始时间为当前时间
+  },
+] as pipeline[]);
 const size = ref(10)
 const sizeList = ref([5, 10, 20, 50])
+
+const transform = ['源码', '可执行文件', 'Linux软件包']
+
 
 const show = ref([] as boolean[])
 const openShow = (index: number, line: number) =>{
@@ -28,10 +57,23 @@ const goProject = (name: string) =>{
   router.push('/pkgBlade/project/' + name)
 }
 
+const getInfo = () =>{
+  request({
+    url: '/pipeline/getPipeline',
+    method: 'get'
+  }).then((res)=>{
+    console.log(res)
+    pkgList.value = res.data.data
+    pkgTotal.value = pkgList.value.length
+  })
+}
+
+
 onMounted(()=>{
   for (let i = 0; i < pkgList.value.length; i++){
     show.value.splice(0,0, false, false, false)
   }
+  getInfo()
 })
 </script>
 
@@ -56,7 +98,7 @@ onMounted(()=>{
       <div class="project_info">
         您的
         <div class="project_number">
-          <div style="margin-top: -1px">13</div>
+          <div style="margin-top: -1px">{{pkgTotal}}</div>
         </div>
       </div>
       <div style="display: flex;flex: 1;justify-content: right;align-items: center;">
@@ -95,38 +137,39 @@ onMounted(()=>{
       <template v-for="(pkg,index) in pkgList" >
         <div class="project_item">
           <div class="project_avatar">
-            {{pkg.name.substring(0, 1).toUpperCase()}}
+            {{pkg.missionName.substring(0, 1).toUpperCase()}}
           </div>
           <div style="margin-left: 20px;display: flex;flex: 1;flex-direction: column">
             <div style="display: flex;align-items: center">
-              <div class="project_text" @click="goProject(pkg.name)">{{pkg.name}}</div>
-              <Exe v-if="pkg.type == '可执行文件'" class="project_icon"/>
-              <Source v-if="pkg.type == '源码'" class="project_icon"/>
+              <div class="project_text" @click="goProject(pkg.missionName)">{{pkg.missionName}}</div>
+              <Exe v-if="pkg.missionType == 0" class="project_icon"/>
+              <Source v-if="pkg.missionType == 1" class="project_icon"/>
+              <Linux v-if="pkg.missionType == 2" class="project_icon"/>
               <div class="project_number" style="margin-left: 0">
-                <div>{{pkg.type}}</div>
+                <div>{{transform[pkg.missionType]}}</div>
               </div>
             </div>
-            <div class="project_describe">{{pkg.describe}}</div>
+            <div class="project_describe">{{pkg.missionDescription}}</div>
           </div>
           <div style="display: flex;flex: 1;justify-content: right;align-items: center">
             <div style="display: flex;flex-direction: column;align-items: flex-end;">
               <div style="display: flex;align-items: center;margin-bottom: 3px">
-                <div class="pipeline_basic" :class="['pipeline_' + pkg.status]"  @mouseenter="openShow(0, index)" @mouseleave="closeShow(0, index)">
-                  <el-icon v-if="pkg.status == 'finished'" style="margin-top: 1px"><Select /></el-icon>
-                  <el-icon v-if="pkg.status == 'defeated'"><CloseBold /></el-icon>
-                  <el-icon v-if="pkg.status == 'processing'"><MoreFilled /></el-icon>
-                  <Tip :tags="'流水线：' + pkg.status"  v-if="show[3 * index]" style="font-weight: normal"/>
-                </div>
-                <div class="project_show" @mouseenter="openShow(1, index)" @mouseleave="closeShow(1, index)" style="width: 55px;justify-content: right">
-                  <Dependency class="project_icon" style="height: 15px;width: 15px;color: rgb(98, 97, 104)"/>
-                  <div class="project_show_text" style="width: 16px">{{pkg.dependency}}</div>
-                  <Tip tags="依赖数" v-if="show[3 * index + 1]"/>
-                </div>
-                <div class="project_show" @mouseenter="openShow(2, index)" @mouseleave="closeShow(2, index)" style="width: 70px;justify-content: right">
-                  <Efficiency class="project_icon" style="height: 15px;width: 15px;color: rgb(98, 97, 104)"/>
-                  <div class="project_show_text" style="width: 38px">{{pkg.degree * 100}}%</div>
-                  <Tip tags="裁剪度" v-if="show[3 * index + 2]"/>
-                </div>
+<!--                <div class="pipeline_basic" :class="['pipeline_' + pkg.status]"  @mouseenter="openShow(0, index)" @mouseleave="closeShow(0, index)">-->
+<!--                  <el-icon v-if="pkg.status == 'finished'" style="margin-top: 1px"><Select /></el-icon>-->
+<!--                  <el-icon v-if="pkg.status == 'defeated'"><CloseBold /></el-icon>-->
+<!--                  <el-icon v-if="pkg.status == 'processing'"><MoreFilled /></el-icon>-->
+<!--                  <Tip :tags="'流水线：' + pkg.status"  v-if="show[3 * index]" style="font-weight: normal"/>-->
+<!--                </div>-->
+<!--                <div class="project_show" @mouseenter="openShow(1, index)" @mouseleave="closeShow(1, index)" style="width: 55px;justify-content: right">-->
+<!--                  <Dependency class="project_icon" style="height: 15px;width: 15px;color: rgb(98, 97, 104)"/>-->
+<!--                  <div class="project_show_text" style="width: 16px">{{pkg.dependency}}</div>-->
+<!--                  <Tip tags="依赖数" v-if="show[3 * index + 1]"/>-->
+<!--                </div>-->
+<!--                <div class="project_show" @mouseenter="openShow(2, index)" @mouseleave="closeShow(2, index)" style="width: 70px;justify-content: right">-->
+<!--                  <Efficiency class="project_icon" style="height: 15px;width: 15px;color: rgb(98, 97, 104)"/>-->
+<!--                  <div class="project_show_text" style="width: 38px">{{pkg.degree * 100}}%</div>-->
+<!--                  <Tip tags="裁剪度" v-if="show[3 * index + 2]"/>-->
+<!--                </div>-->
               </div>
               <div class="project_describe" style="width: fit-content">
                 创建于 {{new Date().getMonth()}}/{{new Date().getDate()}}

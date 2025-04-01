@@ -68,7 +68,7 @@ onMounted(()=>{
     <div>
       <div class="title">
         <el-icon class="pic"><Grid /></el-icon>
-        欢迎加入91花瓶PK
+        欢迎使用Pkg Blade
       </div>
       <div class="login">
         <Login v-if="login.type==0 && login.order==0"/>

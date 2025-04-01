@@ -6,6 +6,10 @@ import {request} from "@/util/request";
 import {ElMessage} from "element-plus";
 import {useLoginInfoStore} from "@/pages/pkgBlade/login/loginInfo";
 import {useUserInfoStore} from "@/stores/user";
+import { useCookies } from "vue3-cookies";
+
+
+const { cookies } = useCookies();
 
 const login = useLoginInfoStore()
 const user = useUserInfoStore()
@@ -14,7 +18,7 @@ const blank = ref(false)
 const wrong = ref(false)
 
 const password = ref('')
-const logo = ref('../../../public/teamB.png')
+const logo = ref('../../../public/logoPrune.png')
 
 const back = () =>{
   login.order = 0
@@ -27,36 +31,29 @@ const change = () =>{
     return
   }
   request({
-    url: '/user/login',
-    method: 'GET',
+    url: '/auth/login',
+    method: 'POST',
     params: {
-      account: login.account,
+      username: login.account,
       password: password.value
     }
   }).then((res)=>{
     console.log(res)
-    if(res.data) {
-      ElMessage.success("登录成功")
-      user.id = login.account
-      // user.name
-      request({
-        url: '/user/getName',
-        method: 'GET',
-        params:{
-          account: login.account
-        }
-      }).then((res)=>{
-        user.name = res.data
-      })
-      router.push('/')
-    }
-    else {
+    if(res.data.data == 'Invalid username or password!'){
       ElMessage.warning('账号或密码错误')
       blank.value = false
       wrong.value = true
+    }else {
+      ElMessage.success("登录成功")
+      user.name = login.account
+      user.token = res.data.data
+      // alert(user.token)
+      cookies.set('satoken', user.token, 1000000)
+      console.log(document.cookie)
+      router.push('/')
     }
   }).catch((err)=>{
-    ElMessage.warning('登录错误')
+
   })
 }
 
@@ -69,18 +66,18 @@ const changeType = () =>{
     <div class="loginLogo">
       <el-image :src="logo" class="loginPic"></el-image>
       <div class="loginTitle">
-        91 Roco
+        PkgBlade
       </div>
     </div>
-    <div class="loginBack">
+    <div class="loginBack" style="margin-left: -5px">
       <div class="loginIconBox" @click="back">
         <el-icon><Back /></el-icon>
       </div>
       {{login.account}}
     </div>
     <div class="loginLogin">输入密码</div>
-    <div v-if="blank" style="color: red;font-size: 15px;margin-top: 10px;">请输入Roco账户的密码</div>
-    <div v-if="wrong" style="color: red;font-size: 15px;margin-top: 10px;">Roco账户密码错误</div>
+    <div v-if="blank" style="color: red;font-size: 15px;margin-top: 10px;">请输入PkgBlade账户的密码</div>
+    <div v-if="wrong" style="color: red;font-size: 15px;margin-top: 10px;">PkgBlade账户密码错误</div>
     <div class="loginInput">
       <input class="inputInput" type="password" v-model="password" placeholder="密码">
     </div>

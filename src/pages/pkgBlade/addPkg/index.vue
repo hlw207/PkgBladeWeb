@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {reactive, ref} from "vue";
+import {reactive, ref, watch} from "vue";
 import type {UploadFile, UploadFiles, UploadUserFile} from "element-plus";
 import {request} from "@/util/request";
 import {ElMessage} from "element-plus";
@@ -11,6 +11,7 @@ const pkg = reactive({
   type: 'exe'
 })
 
+const transform = {'exe': 0, 'source': 1, 'linux_package': 2}
 const submitFile = ref(null)
 
 const changeFile = (uploadFile: UploadFile, uploadFiles: UploadFiles) =>{
@@ -36,26 +37,32 @@ const removeFile = (uploadFile: UploadFile, uploadFiles: UploadFiles) =>{
   submitFile.value = null
 }
 
+watch(()=>pkg.type, ()=>{
+  submitFile.value = null
+})
 
 const uploadFile = () =>{
   if(pkg.name == ''){
     ElMessage.warning("请填写软件包名称")
     return
   }
-  if(submitFile.value == null){
+  if(pkg.type != 'linux_package' && submitFile.value == null){
     ElMessage.warning("请上传软件包")
     return;
   }
   let formData = new FormData();
-  formData.append('file', submitFile.value.raw)
-  formData.append('fileName', pkg.name)
-  formData.append('description', pkg.description)
+  formData.append('file', submitFile.value == null ? null:submitFile.value.raw)
+  formData.append('missionName', pkg.name)
+  formData.append('missionDescription', pkg.description)
+  formData.append('missionType', transform[pkg.type])
   request({
-    url: '/file/pkgAdd',
+    url: '/pipeline/createPipeline',
     method: "POST",
     data: formData,
   }).then((res)=>{
+    console.log(res.data)
     ElMessage.success("上传成功")
+    router.push('/')
   })
 }
 
@@ -108,6 +115,11 @@ const uploadFile = () =>{
       <el-radio label="source" size="large">
         <div style="margin-top: -1px;display: flex">
         软件包源码
+        </div>
+      </el-radio>
+      <el-radio label="linux_package" size="large">
+        <div style="margin-top: -1px;display: flex">
+          linux软件包（无需上传）
         </div>
       </el-radio>
     </el-radio-group>
