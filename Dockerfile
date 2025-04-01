@@ -7,6 +7,9 @@ WORKDIR /app
 # 将依赖文件复制到工作目录中
 COPY package.json package-lock.json ./
 
+RUN nvm install v20.18.0
+
+RUN nvm use v20.18.0
 # 安装依赖
 RUN npm install
 
